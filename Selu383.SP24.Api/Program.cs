@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Selu383.SP24.Api.Data;
 using Selu383.SP24.Api.Features.Hotels;
+using Selu383.SP24.Api.Features.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+builder.Services.AddIdentity<User, Role>(options =>
+{
+
+}
+).AddEntityFrameworkStores<DataContext>();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -47,6 +54,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseAuthentication();
 
 app.MapControllers();
 
