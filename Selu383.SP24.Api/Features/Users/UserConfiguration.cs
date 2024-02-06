@@ -10,7 +10,12 @@ namespace Selu383.SP24.Api.Features.Users
             builder.HasKey(u => u.Id);
             builder.Property(u => u.FirstName).HasMaxLength(50).IsRequired();
             builder.Property(u => u.LastName).HasMaxLength(50).IsRequired();
-            builder.Property(u => u.Username).HasMaxLength(50).IsRequired();
+            builder.Property(u => u.UserName).HasMaxLength(50).IsRequired();
+
+            //builder.HasMany(u => u.Roles)
+            //    .WithOne()
+            //    .HasForeignKey(ur => ur.UserId)
+            //    .IsRequired();
         }
     }
 }
