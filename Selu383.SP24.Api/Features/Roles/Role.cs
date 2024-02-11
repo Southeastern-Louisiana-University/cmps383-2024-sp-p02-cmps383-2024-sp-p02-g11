@@ -1,8 +1,18 @@
-﻿namespace Selu383.SP24.Api.Features.Roles
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace Selu383.SP24.Api.Features.Users
 {
-    public class Role
+    public class Role : IdentityRole<int>
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
+
+        public virtual ICollection<UserRole> Users { get; set; } = new List<UserRole>();
+
+    }
+
+    public class RoleNames
+    {
+        public const string Admin = nameof(Admin);
+
+        public const string User = nameof(User);
     }
 }

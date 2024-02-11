@@ -1,109 +1,67 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Selu383.SP24.Api.Data;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Selu383.SP24.Api.Features.Users;
+using System.Transactions;
 
-namespace Selu383.SP24.Api.Controllers;
-
-[Route("api/users")]
-[ApiController]
-public class UsersController : ControllerBase
+namespace Selu383.SP24.Api.Controllers
 {
-    private readonly DbSet<User> users;
-    private readonly DataContext dataContext;
+    [ApiController]
+    [Route("api/users")]
+    public class UsersController : ControllerBase
+    {
+        private readonly UserManager<User> userManager;
 
-    public UsersController(DataContext dataContext)
-    {
-        this.dataContext = dataContext;
-        users = dataContext.Set<User>();
-    }
-
-    [HttpGet]
-    public IQueryable<UserDto> GetAllUsers()
-    {
-        return GetUserDto(users);
-    }
-    [HttpGet]
-    [Route("{id}")]
-    public ActionResult<UserDto> GetUserById(int id)
-    {
-        var result = GetUserDto(users.Where(x => x.Id == id)).FirstOrDefault();
-        if (result == null)
+        public UsersController(UserManager<User> userManager)
         {
-            return NotFound();
+            this.userManager = userManager;
         }
 
-        return Ok(result);
-    }
-    [HttpPost]
-    public ActionResult<UserDto> CreateUser(UserDto dto)
-    {
-        var user = new User
+        [HttpPost]
+        [Authorize(Roles = RoleNames.Admin)]
+        public async Task<ActionResult<UserDto>> Create(CreateUserDto dto)
         {
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            UserName = dto.UserName,
-        };
-        users.Add(user);
-        dataContext.SaveChanges();
-        dto.Id = user.Id;
-        return CreatedAtAction(nameof(GetUserById), new { id = dto.Id }, dto);
-    }
+            using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
-    [HttpPut]
-    [Route("{id}")]
-    public ActionResult<UserDto> UpdateUser(int id, UserDto dto)
-    {
-        var user = users.FirstOrDefault(x => x.Id == id);
-        if (user == null)
-        {
-            return NotFound();
-        }
-        user.FirstName = dto.FirstName;
-        user.LastName = dto.LastName;
-        user.UserName = dto.UserName;
-
-        dataContext.SaveChanges();
-        dto.Id = user.Id;
-        return Ok(dto);
-    }
-
-    [HttpDelete]
-    [Route("{id}")]
-    public ActionResult DeleteUser(int id)
-    {
-        var user = users.FirstOrDefault(x => x.Id == id);
-        if (user == null)
-        {
-            return NotFound();
-        }
-
-        users.Remove(user);
-
-        dataContext.SaveChanges();
-
-        return Ok();
-    }
-
-
-
-
-
-
-
-
-
-
-    private static IQueryable<UserDto> GetUserDto(IQueryable<User> users)
-    {
-        return users
-            .Select(x => new UserDto
+            var newUser = new User
             {
-                Id = x.Id,
-                FirstName = x.FirstName,
-                LastName = x.LastName,
-                UserName = x.UserName,
-                //Roles = x.Role,
+                UserName = dto.UserName,
+            };
+
+            var createResult = await userManager.CreateAsync(newUser, dto.Password);
+
+            if (!createResult.Succeeded)
+            {
+                return BadRequest();
+            }
+
+            if (dto.Roles == null || dto.Roles.Length == 0)
+            {
+                return BadRequest();
+            }
+
+            try
+            {
+                var roleResult = await userManager.AddToRolesAsync(newUser, dto.Roles);
+                if (!roleResult.Succeeded)
+                {
+                    return BadRequest();
+                }
+            }
+            catch (InvalidOperationException ex) when (ex.Message.StartsWith("Role") && ex.Message.EndsWith("does not exist."))
+            {
+                return BadRequest();
+            }
+
+            transaction.Complete();
+
+            return Ok(new UserDto
+            {
+                Id = newUser.Id,
+                Roles = dto.Roles,
+                UserName = newUser.UserName,
             });
+        }
+
     }
 }
