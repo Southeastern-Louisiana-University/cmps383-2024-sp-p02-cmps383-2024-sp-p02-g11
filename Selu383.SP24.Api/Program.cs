@@ -46,7 +46,6 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
     var db = scope.ServiceProvider.GetRequiredService<DataContext>();
 
-    var hotels = db.Set<Hotel>();
 }
 
 // Configure the HTTP request pipeline.
