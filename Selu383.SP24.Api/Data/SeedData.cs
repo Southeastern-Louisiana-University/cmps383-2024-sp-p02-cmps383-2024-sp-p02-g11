@@ -40,7 +40,7 @@ namespace Selu383.SP24.Api.Data
             const string defaultPass = "Password123!";
             var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
 
-            if (userManager.Users.Any())
+            if (await userManager.Users.AnyAsync())
             {
                 return;
             }
@@ -55,6 +55,7 @@ namespace Selu383.SP24.Api.Data
             {
                 await userManager.AddToRoleAsync(adminUser, RoleNames.Admin);
             }
+
             var bob = new User
             {
                 UserName = "bob",
@@ -70,8 +71,8 @@ namespace Selu383.SP24.Api.Data
 
             await userManager.CreateAsync(sue, defaultPass);
             await userManager.AddToRoleAsync(sue, RoleNames.User);
-
         }
+
 
         private static async Task AddRoles(IServiceProvider serviceProvider)
         {

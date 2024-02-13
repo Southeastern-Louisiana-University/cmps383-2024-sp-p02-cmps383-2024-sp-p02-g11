@@ -46,8 +46,6 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
     var db = scope.ServiceProvider.GetRequiredService<DataContext>();
 
-    var bob = await userManager.FindByNameAsync("bob");
-    var bobId = bob.Id;
     var hotels = db.Set<Hotel>();
 }
 
